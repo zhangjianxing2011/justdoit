@@ -2,144 +2,145 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>Just Do It!</title>
+<title>守护地球</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-        background: linear-gradient(270deg, #ff7eb3, #65d6ce, #ffd166);
-        background-size: 600% 600%;
-        animation: gradientMove 10s ease infinite;
-    }
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: "Segoe UI", sans-serif;
+    background: radial-gradient(circle at center, #0b1d2a, #000);
+    color: white;
+}
 
-    @keyframes gradientMove {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
+/* 标题 */
+.title {
+    position: absolute;
+    top: 40px;
+    width: 100%;
+    text-align: center;
+    font-size: 32px;
+    letter-spacing: 2px;
+    font-weight: 600;
+}
 
-    canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-    }
+/* 副标题 */
+.subtitle {
+    position: absolute;
+    top: 80px;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    color: #aaa;
+}
 
-    .center {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-        color: white;
-    }
+/* 按钮 */
+.btn {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
 
-    button {
-        padding: 12px 20px;
-        font-size: 16px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        background: rgba(255,255,255,0.2);
-        color: white;
-        backdrop-filter: blur(5px);
-    }
+.btn:hover {
+    transform: translateX(-50%) scale(1.1);
+}
 
-    button:hover {
-        background: rgba(255,255,255,0.4);
-    }
+/* 提示 */
+.tip {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+}
 </style>
 </head>
+
 <body>
 
-<canvas id="canvas"></canvas>
+<div class="title">🌍 Protect Our Earth</div>
+<div class="subtitle">拖动地球，感受我们的家园</div>
 
-<div class="center">
-    <h1>🎮 点击屏幕试试</h1>
-    <button onclick="kick()">⚽ 点球挑战</button>
-    <p id="result"></p>
-</div>
+<button class="btn" onclick="alert('从节约一滴水开始 🌱')">
+    我能做什么？
+</button>
+
+<div class="tip">Drag to rotate • Scroll to zoom</div>
+
+<!-- Three.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const scene = new THREE.Scene();
 
-let particles = [];
+// 相机
+const camera = new THREE.PerspectiveCamera(
+    45,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+camera.position.z = 3;
 
-// 鼠标粒子
-document.addEventListener("mousemove", e => {
-    for (let i = 0; i < 3; i++) {
-        particles.push({
-            x: e.clientX,
-            y: e.clientY,
-            size: Math.random() * 5 + 2,
-            speedX: (Math.random() - 0.5) * 2,
-            speedY: (Math.random() - 0.5) * 2,
-            life: 60
-        });
-    }
+// 渲染器
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// 光源
+const light = new THREE.PointLight(0xffffff, 1.5);
+light.position.set(5, 3, 5);
+scene.add(light);
+
+// 地球材质
+const textureLoader = new THREE.TextureLoader();
+const earthTexture = textureLoader.load(
+    "https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg"
+);
+
+// 球体
+const geometry = new THREE.SphereGeometry(1, 64, 64);
+const material = new THREE.MeshStandardMaterial({
+    map: earthTexture
 });
 
-// 点击爆炸
-document.addEventListener("click", e => {
-    for (let i = 0; i < 30; i++) {
-        particles.push({
-            x: e.clientX,
-            y: e.clientY,
-            size: Math.random() * 6 + 2,
-            speedX: (Math.random() - 0.5) * 6,
-            speedY: (Math.random() - 0.5) * 6,
-            life: 80
-        });
-    }
-});
+const earth = new THREE.Mesh(geometry, material);
+scene.add(earth);
+
+// 控制器（拖动旋转）
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
 
 // 动画
 function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    particles.forEach((p, index) => {
-        p.x += p.speedX;
-        p.y += p.speedY;
-        p.life--;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
-        ctx.fill();
-
-        if (p.life <= 0) {
-            particles.splice(index, 1);
-        }
-    });
-
     requestAnimationFrame(animate);
+
+    earth.rotation.y += 0.0015; // 自动慢速旋转
+    controls.update();
+
+    renderer.render(scene, camera);
 }
 
 animate();
 
-// 简单小游戏
-function kick() {
-    const result = document.getElementById("result");
-    const rand = Math.random();
-
-    if (rand > 0.6) {
-        result.innerText = "⚽ 进球了！！！";
-    } else if (rand > 0.3) {
-        result.innerText = "🥅 被守门员扑出了";
-    } else {
-        result.innerText = "😅 打飞了";
-    }
-}
-
 // 自适应
-window.onresize = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-};
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
 </script>
 
 </body>
